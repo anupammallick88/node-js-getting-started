@@ -1,202 +1,113 @@
-<!DOCTYPE html>
-<html>
- <title>Genesis- Test</title>
-<head>
- <link rel="stylesheet" href="https://cdn.webrtc-experiment.com/style.css">
+<title>Genesis</title>
+<h1>Genesis</a>
+</h1>
 <style>
-        * {
-            word-wrap:break-word;
-        }
-        video {
-            object-fit: fill;
-            width: 30%;
-        }
-        button,
-        input,
-        select {
-            font-weight: normal;
-            padding: 2px 4px;
-            text-decoration: none;
-            display: inline-block;
-            text-shadow: none;
-            font-size: 16px;
-            outline: none;
-        }
-        .make-center {
-            text-align: center;
-            padding: 5px 10px;
-        }
-        img, input, textarea {
-          max-width: 100%
-        }
-        @media all and (max-width: 500px) {
-            .fork-left, .fork-right, .github-stargazers {
-                display: none;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-  <div class="jumbotron text-center">
-   <h2>GENESIS</h2>
-  <div class="container">
-    <section class="experiment">
-            <div class="make-center">
-                <input type="text" id="room-id" value="abcdef" autocorrect=off autocapitalize=off size=20>
-                <button id="open-room">Open Room</button>
-                <button id="join-room">Join Room</button>
-                <button id="open-or-join-room">Auto Open Or Join Room</button>
-
-                <div id="room-urls" style="text-align: center;display: none;background: #F1EDED;margin: 15px -10px;border: 1px solid rgb(189, 189, 189);border-left: 0;border-right: 0;"></div>
-            </div>
-
-            <div id="videos-container"></div>
-            
-        </section>
-  </div>
+video {
+    width: 30%
+}
+button {
+    font-family: Myriad, Arial, Verdana;
+    font-weight: normal;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    padding: 4px 12px;
+    text-decoration: none;
+    color: rgb(27, 26, 26);
+    display: inline-block;
+    box-shadow: rgb(255, 255, 255) 1px 1px 0px 0px inset;
+    text-shadow: none;
+    background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(241, 241, 241)), to(rgb(230, 230, 230)));
+    font-size: 20px;
+    border: 1px solid red;
+}
+button[disabled] {
+    background: rgba(216, 205, 205, 0.2);
+    border: 1px solid rgb(233, 224, 224);
+    outline: none;
+    box-shadow: none;
+}
+blockquote {
+    font-size: 20px;
+    color: rgb(172, 10, 10);
+    border: 1px solid rgb(172, 10, 10);
+    padding: 5px 10px;
+    border-radius: 5px;
+    margin: 9px 10px;
+}
+</style>
+<hr />
+<div id="buttons-container">
+    <button id="broadcast-all-cameras" disabled>Broadcast All Cameras</button>
 </div>
-<script src="https://cdn.webrtc-experiment.com:443/rmc3.min.js"></script>
 
-        <!-- custom layout for HTML5 audio/video elements -->
-        <script src="https://cdn.webrtc-experiment.com/getMediaElement.js"></script>
+<hr />
 
-        <!-- socket.io for signaling -->
-        <script src="https://cdn.webrtc-experiment.com:443/socket.io.js"></script>
-        <script src="Screen-Capturing.js"></script>
+<div id="videos-container"></div>
 
-        <script>
-            // ......................................................
-            // .......................UI Code........................
-            // ......................................................
-            document.getElementById('open-room').onclick = function() {
-                disableInputButtons();
-                connection.open(document.getElementById('room-id').value, function() {
-                    showRoomURL(connection.sessionid);
-                });
-            };
-            document.getElementById('join-room').onclick = function() {
-                disableInputButtons();
-                connection.join(document.getElementById('room-id').value);
-            };
-            document.getElementById('open-or-join-room').onclick = function() {
-                disableInputButtons();
-                connection.openOrJoin(document.getElementById('room-id').value, function(isRoomExists, roomid) {
-                    if(!isRoomExists) {
-                        showRoomURL(roomid);
+<script src="https://cdn.webrtc-experiment.com/RTCMultiConnection-v2.2.1.js"></script>
+<script src="https://cdn.webrtc-experiment.com/firebase.js"></script>
+<script>
+var connection = new RTCMultiConnection();
+connection.onNewSession = function(session) {
+    connection.join(session);
+};
+// connection.getExternalIceServers = false; // optional--remove it.
+// connection.iceServers.length = 1;         // optional--remove it.
+connection.dontCaptureUserMedia = true;
+// Parent <div> for videos
+connection.body = document.getElementById('videos-container');
+connection.session = {
+    audio: true,
+    video: true
+};
+connection.direction = 'one-way';
+connection.sdpConstraints.mandatory = {
+    OfferToReceiveAudio: true,
+    OfferToReceiveVideo: true
+};
+var buttonsContainer = document.getElementById('buttons-container');
+// DetectRTC.load --- to make sure all devices are captured
+// connection.enumerateDevices --- to get list of all captured devices
+connection.DetectRTC.load(function() {
+    connection.enumerateDevices(function(devices) {
+        // iterate over devices-array
+        devices.forEach(function(device) {
+            // skip audio devices
+            if (device.kind.indexOf('audio') != -1) return;
+            var button = document.createElement('button');
+            button.id = device.deviceId;
+            button.innerHTML = device.label || device.deviceId;
+            button.onclick = function() {
+                this.disabled = true;
+                connection.selectDevices(this.id);
+                connection.dontCaptureUserMedia = false;
+                connection.captureUserMedia(function(stream) {
+                    connection.attachStreams.push(stream);
+                    connection.dontCaptureUserMedia = true;
+                    if (document.getElementById('broadcast-all-cameras').disabled == true) {
+                        document.getElementById('broadcast-all-cameras').disabled = false;
+                        // document.getElementById('broadcast-all-cameras').style.background = '-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(143, 231, 253)), to(rgb(255, 255, 255)))';
+                        document.getElementById('broadcast-all-cameras').style.background = '-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(195, 35, 56)), to(rgb(255, 15, 15)))';
+                        document.getElementById('broadcast-all-cameras').style.color = 'white';
                     }
+                    alert('Please do not forget to click "Broadcast All Cameras" red-button.');
                 });
             };
-            // ......................................................
-            // ..................RTCMultiConnection Code.............
-            // ......................................................
-            var connection = new RTCMultiConnection();
-            // by default, socket.io server is assumed to be deployed on your own URL
-            connection.socketURL = '/';
-            // comment-out below line if you do not have your own socket.io server
-            connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
-            connection.socketMessageEvent = 'video-conference-demo';
-            connection.session = {
-                audio: true,
-                video: true
-            };
-            connection.sdpConstraints.mandatory = {
-                OfferToReceiveAudio: true,
-                OfferToReceiveVideo: true
-            };
-            connection.videosContainer = document.getElementById('videos-container');
-            connection.onstream = function(event) {
-                var width = parseInt(connection.videosContainer.clientWidth / 2) - 20;
-                var mediaElement = getMediaElement(event.mediaElement, {
-                    title: event.userid,
-                    buttons: ['full-screen'],
-                    width: width,
-                    showOnMouseEnter: false
-                });
-                connection.videosContainer.appendChild(mediaElement);
-                setTimeout(function() {
-                    mediaElement.media.play();
-                }, 5000);
-                mediaElement.id = event.streamid;
-            };
-            connection.onstreamended = function(event) {
-                var mediaElement = document.getElementById(event.streamid);
-                if(mediaElement) {
-                    mediaElement.parentNode.removeChild(mediaElement);
-                }
-            };
-            function disableInputButtons() {
-                document.getElementById('open-or-join-room').disabled = true;
-                document.getElementById('open-room').disabled = true;
-                document.getElementById('join-room').disabled = true;
-                document.getElementById('room-id').disabled = true;
-            }
-            // ......................................................
-            // ......................Handling Room-ID................
-            // ......................................................
-            function showRoomURL(roomid) {
-                var roomHashURL = '#' + roomid;
-                var roomQueryStringURL = '?roomid=' + roomid;
-                var html = '<h2>Unique URL for your room:</h2><br>';
-                html += 'Hash URL: <a href="' + roomHashURL + '" target="_blank">' + roomHashURL + '</a>';
-                html += '<br>';
-                html += 'QueryString URL: <a href="' + roomQueryStringURL + '" target="_blank">' + roomQueryStringURL + '</a>';
-                var roomURLsDiv = document.getElementById('room-urls');
-                roomURLsDiv.innerHTML = html;
-                roomURLsDiv.style.display = 'block';
-            }
-            (function() {
-                var params = {},
-                    r = /([^&=]+)=?([^&]*)/g;
-                function d(s) {
-                    return decodeURIComponent(s.replace(/\+/g, ' '));
-                }
-                var match, search = window.location.search;
-                while (match = r.exec(search.substring(1)))
-                    params[d(match[1])] = d(match[2]);
-                window.params = params;
-            })();
-            var roomid = '';
-            if (localStorage.getItem(connection.socketMessageEvent)) {
-                roomid = localStorage.getItem(connection.socketMessageEvent);
-            } else {
-                roomid = connection.token();
-            }
-            document.getElementById('room-id').value = roomid;
-            document.getElementById('room-id').onkeyup = function() {
-                localStorage.setItem(connection.socketMessageEvent, this.value);
-            };
-            var hashString = location.hash.replace('#', '');
-            if(hashString.length && hashString.indexOf('comment-') == 0) {
-              hashString = '';
-            }
-            var roomid = params.roomid;
-            if(!roomid && hashString.length) {
-                roomid = hashString;
-            }
-            if(roomid && roomid.length) {
-                document.getElementById('room-id').value = roomid;
-                localStorage.setItem(connection.socketMessageEvent, roomid);
-                // auto-join-room
-                (function reCheckRoomPresence() {
-                    connection.checkPresence(roomid, function(isRoomExists) {
-                        if(isRoomExists) {
-                            connection.join(roomid);
-                            return;
-                        }
-                        setTimeout(reCheckRoomPresence, 5000);
-                    });
-                })();
-                disableInputButtons();
-            }
-        </script>
-
-        
-        <script>
-            window.useThisGithubPath = 'muaz-khan/RTCMultiConnection';
-        </script>
-        <script src="main.js"></script>
-        <script src="https://cdn.webrtc-experiment.com/commits.js" async></script>
-</body>
-</html>
+            buttonsContainer.appendChild(button);
+        });
+    });
+});
+connection.connect();
+document.getElementById('broadcast-all-cameras').onclick = function() {
+    this.disabled = true;
+    this.style.background = 'rgba(216, 205, 205, 0.2)';
+    this.style.color = 'rgb(27, 26, 26)';
+    connection.sdpConstraints.mandatory = {
+        OfferToReceiveAudio: false,
+        OfferToReceiveVideo: false
+    };
+    connection.open();
+};
+</script>
