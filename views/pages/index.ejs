@@ -1,112 +1,232 @@
-<title>Genesis</title>
-<h1>Genesis</h1>
-<style>
-video {
-    width: 30%
-}
-button {
-    font-family: Myriad, Arial, Verdana;
-    font-weight: normal;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-    border-bottom-left-radius: 3px;
-    padding: 4px 12px;
-    text-decoration: none;
-    color: rgb(27, 26, 26);
-    display: inline-block;
-    box-shadow: rgb(255, 255, 255) 1px 1px 0px 0px inset;
-    text-shadow: none;
-    background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(241, 241, 241)), to(rgb(230, 230, 230)));
-    font-size: 20px;
-    border: 1px solid red;
-}
-button[disabled] {
-    background: rgba(216, 205, 205, 0.2);
-    border: 1px solid rgb(233, 224, 224);
-    outline: none;
-    box-shadow: none;
-}
-blockquote {
-    font-size: 20px;
-    color: rgb(172, 10, 10);
-    border: 1px solid rgb(172, 10, 10);
-    padding: 5px 10px;
-    border-radius: 5px;
-    margin: 9px 10px;
-}
-</style>
-<hr />
-<div id="buttons-container">
-    <button id="broadcast-all-cameras" disabled>Broadcast All Cameras</button>
-</div>
+<!--
+> Muaz Khan     - github.com/muaz-khan 
+> MIT License   - www.webrtc-experiment.com/licence
+> Documentation - www.RTCMultiConnection.org
+-->
+<!DOCTYPE html>
+<html lang="en">
 
-<hr />
+<head>
+    <title>Video Conferencing using RTCMultiConnection</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <link rel="author" type="text/html" href="https://plus.google.com/+MuazKhan">
+    <meta name="author" content="Muaz Khan">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <link rel="stylesheet" href="https://cdn.webrtc-experiment.com/style.css">
 
-<div id="videos-container"></div>
+    <meta name="title" content="Video Conferencing using RTCMultiConnection" />
+    <meta name="description" content="Video Conferencing using RTCMultiConnection" />
+    <meta name="keywords" content="Video Conference, WebRTC, RTCMultiConnection" />
 
-<script src="https://cdn.webrtc-experiment.com/RTCMultiConnection-v2.2.1.js"></script>
-<script src="https://cdn.webrtc-experiment.com/firebase.js"></script>
-<script>
-var connection = new RTCMultiConnection();
-connection.onNewSession = function(session) {
-    connection.join(session);
-};
-// connection.getExternalIceServers = false; // optional--remove it.
-// connection.iceServers.length = 1;         // optional--remove it.
-connection.dontCaptureUserMedia = true;
-// Parent <div> for videos
-connection.body = document.getElementById('videos-container');
-connection.session = {
-    audio: true,
-    video: true
-};
-connection.direction = 'one-way';
-connection.sdpConstraints.mandatory = {
-    OfferToReceiveAudio: true,
-    OfferToReceiveVideo: true
-};
-var buttonsContainer = document.getElementById('buttons-container');
-// DetectRTC.load --- to make sure all devices are captured
-// connection.enumerateDevices --- to get list of all captured devices
-connection.DetectRTC.load(function() {
-    connection.enumerateDevices(function(devices) {
-        // iterate over devices-array
-        devices.forEach(function(device) {
-            // skip audio devices
-            if (device.kind.indexOf('audio') != -1) return;
-            var button = document.createElement('button');
-            button.id = device.deviceId;
-            button.innerHTML = device.label || device.deviceId;
-            button.onclick = function() {
+    <style>
+    audio,
+    video {
+        -moz-transition: all 1s ease;
+        -ms-transition: all 1s ease;
+        -o-transition: all 1s ease;
+        -webkit-transition: all 1s ease;
+        transition: all 1s ease;
+        vertical-align: top;
+    }
+    
+    input {
+        border: 1px solid #d9d9d9;
+        border-radius: 1px;
+        font-size: 2em;
+        margin: .2em;
+        width: 30%;
+    }
+    
+    .setup {
+        border-bottom-left-radius: 0;
+        border-top-left-radius: 0;
+        font-size: 102%;
+        height: 47px;
+        margin-left: -9px;
+        margin-top: 8px;
+        position: absolute;
+    }
+    
+    p {
+        padding: 1em;
+    }
+    
+    li {
+        border-bottom: 1px solid rgb(189, 189, 189);
+        border-left: 1px solid rgb(189, 189, 189);
+        padding: .5em;
+    }
+    </style>
+    <script>
+    document.createElement('article');
+    document.createElement('footer');
+    </script>
+
+    <!-- scripts used for broadcasting -->
+    <script src="https://cdn.webrtc-experiment.com/firebase.js"></script>
+    <script src="https://cdn.webrtc-experiment.com/RTCMultiConnection.js">
+    </script>
+</head>
+
+<body>
+    <article>
+        <header style="text-align: center;">
+            <h1>
+                Video Conferencing using <a href="https://github.com/muaz-khan/RTCMultiConnection">RTCMultiConnection</a>
+            </h1>
+            <p>
+                <a href="https://www.webrtc-experiment.com/RTCMultiConnection/">HOME</a>
+                <span> &copy; </span>
+                <a href="http://www.MuazKhan.com/" target="_blank">Muaz Khan</a>
+                    
+                .
+                <a href="http://twitter.com/WebRTCWeb" target="_blank" title="Twitter profile for WebRTC Experiments">@WebRTCWeb</a>
+                    
+                .
+                <a href="https://github.com/muaz-khan?tab=repositories" target="_blank" title="Github Profile">Github</a>
+                    
+                .
+                <a href="https://github.com/muaz-khan/RTCMultiConnection/issues?state=open" target="_blank">Latest issues</a>
+                    
+                .
+                <a href="https://github.com/muaz-khan/RTCMultiConnection/commits/master" target="_blank">What's New?</a>
+            </p>
+        </header>
+
+        <div class="github-stargazers"></div>
+
+        <blockquote>
+            You can "also" try <a href="https://rtcmulticonnection.herokuapp.com/demos/Video-Conferencing.html">Video Conferencing using RTCMultiConnection v3</a>.
+        </blockquote>
+
+        <!-- just copy this <section> and next script -->
+        <section class="experiment">
+            <section>
+                <span>
+                    Private ??
+                    <a href="" target="_blank" title="Open this link in new tab. Then your room will be private!">
+                        <code>
+                            <strong id="unique-token">#123456789</strong>
+                        </code>
+                    </a>
+                </span>
+
+                <input type="text" id="conference-name">
+                <button id="setup-new-conference" class="setup">Setup New Conference</button>
+            </section>
+
+            <!-- list of all available broadcasting rooms -->
+            <table style="width: 100%;" id="rooms-list"></table>
+
+            <!-- local/remote videos container -->
+            <div id="videos-container"></div>
+        </section>
+
+        <script>
+        // Muaz Khan     - https://github.com/muaz-khan
+        // MIT License   - https://www.webrtc-experiment.com/licence/
+        // Documentation - https://github.com/muaz-khan/RTCMultiConnection
+        var connection = new RTCMultiConnection();
+        connection.session = {
+            audio: true,
+            video: true
+        };
+        connection.onstream = function(e) {
+            e.mediaElement.width = 600;
+            videosContainer.insertBefore(e.mediaElement, videosContainer.firstChild);
+            rotateVideo(e.mediaElement);
+            scaleVideos();
+        };
+        function rotateVideo(mediaElement) {
+            mediaElement.style[navigator.mozGetUserMedia ? 'transform' : '-webkit-transform'] = 'rotate(0deg)';
+            setTimeout(function() {
+                mediaElement.style[navigator.mozGetUserMedia ? 'transform' : '-webkit-transform'] = 'rotate(360deg)';
+            }, 1000);
+        }
+        connection.onstreamended = function(e) {
+            e.mediaElement.style.opacity = 0;
+            rotateVideo(e.mediaElement);
+            setTimeout(function() {
+                if (e.mediaElement.parentNode) {
+                    e.mediaElement.parentNode.removeChild(e.mediaElement);
+                }
+                scaleVideos();
+            }, 1000);
+        };
+        var sessions = {};
+        connection.onNewSession = function(session) {
+            if (sessions[session.sessionid]) return;
+            sessions[session.sessionid] = session;
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td><strong>' + session.sessionid + '</strong> is running a conference!</td>' +
+                '<td><button class="join">Join</button></td>';
+            roomsList.insertBefore(tr, roomsList.firstChild);
+            var joinRoomButton = tr.querySelector('.join');
+            joinRoomButton.setAttribute('data-sessionid', session.sessionid);
+            joinRoomButton.onclick = function() {
                 this.disabled = true;
-                connection.selectDevices(this.id);
-                connection.dontCaptureUserMedia = false;
-                connection.captureUserMedia(function(stream) {
-                    connection.attachStreams.push(stream);
-                    connection.dontCaptureUserMedia = true;
-                    if (document.getElementById('broadcast-all-cameras').disabled == true) {
-                        document.getElementById('broadcast-all-cameras').disabled = false;
-                        // document.getElementById('broadcast-all-cameras').style.background = '-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(143, 231, 253)), to(rgb(255, 255, 255)))';
-                        document.getElementById('broadcast-all-cameras').style.background = '-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(195, 35, 56)), to(rgb(255, 15, 15)))';
-                        document.getElementById('broadcast-all-cameras').style.color = 'white';
-                    }
-                    alert('Please do not forget to click "Broadcast All Cameras" red-button.');
-                });
+                var sessionid = this.getAttribute('data-sessionid');
+                session = sessions[sessionid];
+                if (!session) throw 'No such session exists.';
+                connection.join(session);
             };
-            buttonsContainer.appendChild(button);
-        });
-    });
-});
-connection.connect();
-document.getElementById('broadcast-all-cameras').onclick = function() {
-    this.disabled = true;
-    this.style.background = 'rgba(216, 205, 205, 0.2)';
-    this.style.color = 'rgb(27, 26, 26)';
-    connection.sdpConstraints.mandatory = {
-        OfferToReceiveAudio: false,
-        OfferToReceiveVideo: false
-    };
-    connection.open();
-};
-</script>
+        };
+        var videosContainer = document.getElementById('videos-container') || document.body;
+        var roomsList = document.getElementById('rooms-list');
+        document.getElementById('setup-new-conference').onclick = function() {
+            this.disabled = true;
+            connection.open(document.getElementById('conference-name').value || 'Anonymous');
+        };
+        // setup signaling to search existing sessions
+        connection.connect();
+        (function() {
+            var uniqueToken = document.getElementById('unique-token');
+            if (uniqueToken)
+                if (location.hash.length > 2) uniqueToken.parentNode.parentNode.parentNode.innerHTML = '<h2 style="text-align:center;"><a href="' + location.href + '" target="_blank">Share this link</a></h2>';
+                else uniqueToken.innerHTML = uniqueToken.parentNode.parentNode.href = '#' + (Math.random() * new Date().getTime()).toString(36).toUpperCase().replace(/\./g, '-');
+        })();
+        function scaleVideos() {
+            var videos = document.querySelectorAll('video'),
+                length = videos.length,
+                video;
+            var minus = 130;
+            var windowHeight = 700;
+            var windowWidth = 600;
+            var windowAspectRatio = windowWidth / windowHeight;
+            var videoAspectRatio = 4 / 3;
+            var blockAspectRatio;
+            var tempVideoWidth = 0;
+            var maxVideoWidth = 0;
+            for (var i = length; i > 0; i--) {
+                blockAspectRatio = i * videoAspectRatio / Math.ceil(length / i);
+                if (blockAspectRatio <= windowAspectRatio) {
+                    tempVideoWidth = videoAspectRatio * windowHeight / Math.ceil(length / i);
+                } else {
+                    tempVideoWidth = windowWidth / i;
+                }
+                if (tempVideoWidth > maxVideoWidth)
+                    maxVideoWidth = tempVideoWidth;
+            }
+            for (var i = 0; i < length; i++) {
+                video = videos[i];
+                if (video)
+                    video.width = maxVideoWidth - minus;
+            }
+        }
+        window.onresize = scaleVideos;
+        </script>
+
+        
+   
+
+    <!-- commits.js is useless for you! -->
+    <script>
+        window.useThisGithubPath = 'muaz-khan/RTCMultiConnection';
+    </script>
+    <script src="https://cdn.webrtc-experiment.com/commits.js" async>
+    </script>
+</body>
+
+</html>
