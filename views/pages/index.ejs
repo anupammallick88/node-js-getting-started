@@ -179,7 +179,41 @@
             };
         </script>
 
-        
+        <?php
+$con = mysql_connect("182.50.133.90:3306","frdkolkata","kolkata@FRD2017","frdhospital2017");
+if (!$con)
+  {
+  die('Could not connect: ' . mysql_error());
+  }
+
+mysql_select_db("frdhospital2017", $con); 
+
+$resapp = mysql_query("SELECT * FROM employee");
+?>
+		
+	   <table class="table table-hover">
+     <tr>
+     <th>Patient Name</th>
+     <th>Contact No</th>
+	  </tr>
+
+
+
+ <?php
+	   while($row1 = mysql_fetch_array($resapp))
+  {
+	  ?>
+<tr>
+      <td height="44"><?php echo $row1["empname"]; ?></td>
+          <td><?php echo $row1["contactno"]; ?></td>
+     </tr>
+<?php 
+		}
+   
+     
+	 
+	 ?>
+</table>
 </body>
 
 </html>
